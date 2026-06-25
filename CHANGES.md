@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 0.1.0 - 2026-06-25
 ### Added
 - `asimov-apple-calendar-emitter`
+- `asimov-apple-contacts-emitter`
 
 ## 0.0.1 - 2025-12-04
 ### Added

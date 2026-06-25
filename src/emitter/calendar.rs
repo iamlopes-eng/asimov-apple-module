@@ -33,6 +33,10 @@ enum CalendarError {
         context: &'static str,
         source: serde_json::Error,
     },
+    Jq {
+        context: &'static str,
+        source: jq::JsonFilterError,
+    },
 }
 
 impl fmt::Display for CalendarError {
@@ -50,6 +54,9 @@ impl fmt::Display for CalendarError {
             CalendarError::Json { context, .. } => {
                 write!(f, "failed to serialize JSON while {context}")
             }
+            CalendarError::Jq { context, .. } => {
+                write!(f, "failed to filter JSON while {context}")
+            }
         }
     }
 }
@@ -59,6 +66,7 @@ impl StdError for CalendarError {
         match self {
             CalendarError::Io { source, .. } => Some(source),
             CalendarError::Json { source, .. } => Some(source),
+            CalendarError::Jq { source, .. } => Some(source),
             _ => None,
         }
     }
@@ -119,6 +127,14 @@ fn handle_error(err: &CalendarError, _flags: &StandardOptions) -> SysexitsError 
                 "JSON serialization failure details"
             );
         }
+        CalendarError::Jq { context, source } => {
+            asimov_module::tracing::debug!(
+                target: "asimov_apple_module::calendar_emitter",
+                %context,
+                error = %source,
+                "jq filter failure details"
+            );
+        }
     }
 
     match err {
@@ -126,6 +142,7 @@ fn handle_error(err: &CalendarError, _flags: &StandardOptions) -> SysexitsError 
         CalendarError::OsaScriptFailed { .. } => EX_UNAVAILABLE,
         CalendarError::CalendarParse { .. } => EX_DATAERR,
         CalendarError::Json { .. } => EX_DATAERR,
+        CalendarError::Jq { .. } => EX_DATAERR,
     }
 }
 
@@ -347,6 +364,13 @@ fn run_emitter(_opts: &Options) -> CoreResult<()> {
         if !description.is_empty() {
             node["description"] = json!(description);
         }
+
+        let node = asimov_apple_module::calendar()
+            .filter_json(node)
+            .map_err(|e| CalendarError::Jq {
+                context: "filtering calendar event JSON",
+                source: e,
+            })?;
 
         serde_json::to_writer(&mut writer, &node)?;
         writer.write_all(b"\n").map_err(|e| CalendarError::Io {

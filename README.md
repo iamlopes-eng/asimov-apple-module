@@ -97,6 +97,45 @@ asimov-apple-calendar-emitter | jq 'select(.isPartOf == "Work")'
 asimov-apple-calendar-emitter > events.jsonl
 ```
 
+### `asimov-apple-contacts-emitter`
+
+Extracts all Apple Contacts people and emits one JSON object per line (JSONL).
+
+Each contact includes:
+
+ - `@id` (stable URN based on the Contacts person ID)
+ - `name`
+ - `givenName` (omitted if not set)
+ - `additionalName` (omitted if not set)
+ - `familyName` (omitted if not set)
+ - `email` (omitted if not set)
+ - `telephone` (omitted if not set)
+ - `address` (omitted if not set)
+ - `affiliation` (organization, omitted if not set)
+ - `jobTitle` (omitted if not set)
+ - `source`: "apple-contacts"
+
+**Basic usage**
+```bash
+asimov-apple-contacts-emitter
+```
+This prints JSONL to stdout, suitable for pipelines.
+
+**Pretty-print with jq**
+```bash
+asimov-apple-contacts-emitter | jq .
+```
+
+**Filter for contacts with email**
+```bash
+asimov-apple-contacts-emitter | jq 'select(.email != null)'
+```
+
+**Save to file**
+```bash
+asimov-apple-contacts-emitter > contacts.jsonl
+```
+
 ## 📦 JSON Output Examples
 
 ### Notes
@@ -128,6 +167,35 @@ asimov-apple-calendar-emitter > events.jsonl
   "description": "Daily sync with the team.",
   "isPartOf": "Work",
   "source": "apple-calendar"
+}
+```
+
+### Contacts
+
+```json
+{
+  "@type": "Person",
+  "@id": "urn:apple:contacts:person:12345-ABCDE",
+  "name": "Jane Appleseed",
+  "givenName": "Jane",
+  "familyName": "Appleseed",
+  "email": [
+    {
+      "@type": "ContactPoint",
+      "name": "work",
+      "value": "jane@example.com"
+    }
+  ],
+  "telephone": [
+    {
+      "@type": "ContactPoint",
+      "name": "mobile",
+      "value": "+1 555 0100"
+    }
+  ],
+  "affiliation": "Example Inc.",
+  "jobTitle": "Product Manager",
+  "source": "apple-contacts"
 }
 ```
 
