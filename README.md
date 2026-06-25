@@ -61,7 +61,45 @@ asimov-apple-notes-emitter | jq 'select(.isPartOf == "Work")'
 asimov-apple-notes-emitter > notes.jsonl
 ```
 
-## 📦 JSON Output Example
+### `asimov-apple-calendar-emitter`
+
+Extracts all Apple Calendar events and emits one JSON object per line (JSONL).
+
+Each event includes:
+
+ - `@id` (stable URN based on iCalendar UID)
+ - `name` (event title)
+ - `startDate`
+ - `endDate`
+ - `location` (omitted if not set)
+ - `description` (omitted if not set)
+ - `isPartOf` (calendar name)
+ - `source`: "apple-calendar"
+
+**Basic usage**
+```bash
+asimov-apple-calendar-emitter
+```
+This prints JSONL to stdout, suitable for pipelines.
+
+**Pretty-print with jq**
+```bash
+asimov-apple-calendar-emitter | jq .
+```
+
+**Filter by calendar**
+```bash
+asimov-apple-calendar-emitter | jq 'select(.isPartOf == "Work")'
+```
+
+**Save to file**
+```bash
+asimov-apple-calendar-emitter > events.jsonl
+```
+
+## 📦 JSON Output Examples
+
+### Notes
 
 ```json
 {
@@ -74,6 +112,22 @@ asimov-apple-notes-emitter > notes.jsonl
   "isPartOf": "Personal",
   "account": "iCloud",
   "source": "apple-notes"
+}
+```
+
+### Calendar
+
+```json
+{
+  "@type": "Event",
+  "@id": "urn:apple:calendar:event:ABC123-DEF456-GHI789",
+  "name": "Team Standup",
+  "startDate": "Wednesday, June 25, 2025 at 9:00:00 AM",
+  "endDate": "Wednesday, June 25, 2025 at 9:30:00 AM",
+  "location": "Conference Room B",
+  "description": "Daily sync with the team.",
+  "isPartOf": "Work",
+  "source": "apple-calendar"
 }
 ```
 

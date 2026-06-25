@@ -2,7 +2,7 @@
 
 [package]
 name = "asimov-apple-module"
-version = "0.0.1"
+version = "0.0.2"
 authors = ["ASIMOV Protocol <support@asimov.so>"]
 edition = "2024"
 #rust-version = "1.85"
@@ -44,4 +44,9 @@ lto = "thin"
 [[bin]]
 name = "asimov-apple-notes-emitter"
 path = "src/emitter/notes.rs"
+required-features = ["cli"]
+
+[[bin]]
+name = "asimov-apple-calendar-emitter"
+path = "src/emitter/calendar.rs"
 required-features = ["cli"]
