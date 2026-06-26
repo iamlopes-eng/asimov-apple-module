@@ -28,6 +28,10 @@ enum ContactsError {
         context: &'static str,
         source: jq::JsonFilterError,
     },
+    Json {
+        context: &'static str,
+        source: serde_json::Error,
+    },
 }
 
 impl fmt::Display for ContactsError {
@@ -42,6 +46,9 @@ impl fmt::Display for ContactsError {
             ContactsError::Jq { context, .. } => {
                 write!(f, "failed to filter JSON while {context}")
             }
+            ContactsError::Json { context, .. } => {
+                write!(f, "failed to serialize JSON while {context}")
+            }
         }
     }
 }
@@ -51,6 +58,7 @@ impl StdError for ContactsError {
         match self {
             ContactsError::Io { source, .. } => Some(source),
             ContactsError::Jq { source, .. } => Some(source),
+            ContactsError::Json { source, .. } => Some(source),
             _ => None,
         }
     }
@@ -100,12 +108,21 @@ fn handle_error(err: &ContactsError, _flags: &StandardOptions) -> SysexitsError 
                 "jq filter failure details"
             );
         }
+        ContactsError::Json { context, source } => {
+            asimov_module::tracing::debug!(
+                target: "asimov_apple_module::contacts_emitter",
+                %context,
+                error = %source,
+                "JSON serialization failure details"
+            );
+        }
     }
 
     match err {
         ContactsError::Io { .. } => EX_IOERR,
         ContactsError::OsaScriptFailed { .. } => EX_UNAVAILABLE,
         ContactsError::Jq { .. } => EX_DATAERR,
+        ContactsError::Json { .. } => EX_DATAERR,
     }
 }
 
@@ -389,9 +406,9 @@ fn run_emitter(_opts: &Options) -> CoreResult<()> {
                 source: e,
             })?;
 
-        serde_json::to_writer(&mut writer, &node).map_err(|e| ContactsError::Jq {
+        serde_json::to_writer(&mut writer, &node).map_err(|e| ContactsError::Json {
             context: "writing filtered contact JSON",
-            source: e.into(),
+            source: e,
         })?;
         writer.write_all(b"\n").map_err(|e| ContactsError::Io {
             context: "writing newline to stdout",

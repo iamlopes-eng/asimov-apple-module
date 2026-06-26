@@ -48,8 +48,11 @@ impl fmt::Display for CalendarError {
             CalendarError::OsaScriptFailed { .. } => {
                 write!(f, "failed to talk to Apple Calendar (osascript)")
             }
-            CalendarError::CalendarParse { context, .. } => {
-                write!(f, "failed to parse Apple Calendar output while {context}")
+            CalendarError::CalendarParse { context, message } => {
+                write!(
+                    f,
+                    "failed to parse Apple Calendar output while {context}: {message}"
+                )
             }
             CalendarError::Json { context, .. } => {
                 write!(f, "failed to serialize JSON while {context}")
@@ -337,6 +340,13 @@ fn run_emitter(_opts: &Options) -> CoreResult<()> {
             })?
             .trim()
             .to_string();
+
+        if parts.next().is_some() {
+            return Err(CalendarError::CalendarParse {
+                context: "reading calendar event fields",
+                message: "unexpected extra field delimiter in event data".to_string(),
+            });
+        }
 
         #[cfg(feature = "tracing")]
         asimov_module::tracing::debug!(
